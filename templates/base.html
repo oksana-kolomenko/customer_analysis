@@ -1,0 +1,140 @@
+<!-- Floating Chatbot -->
+<div id="chatbot-widget">
+  <div id="chat-header" onclick="toggleChat()">
+    💬 ACME Chatbot
+    <span id="toggle-icon" style="float:right; cursor:pointer;">−</span>
+  </div>
+  <div id="chat-body">
+    <div id="chat-messages"></div>
+    <div id="chat-input">
+      <input type="text" id="userMessage" placeholder="Type your message..." />
+      <button onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  #chatbot-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+  }
+
+  #chat-header {
+    background: #0073e6;
+    color: white;
+    padding: 10px;
+    border-radius: 12px 12px 0 0;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  #chat-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  #chat-messages {
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  #chat-messages p {
+    margin: 5px 0;
+  }
+
+  #chat-input {
+    display: flex;
+    border-top: 1px solid #ddd;
+  }
+
+  #chat-input input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    outline: none;
+  }
+
+  #chat-input button {
+    border: none;
+    background: #0073e6;
+    color: white;
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 0 0 12px 0;
+  }
+
+  /* Collapsed state */
+  #chatbot-widget.collapsed {
+    height: auto;
+  }
+
+  #chatbot-widget.collapsed #chat-body {
+    display: none;
+  }
+</style>
+
+<script>
+  // Load chat history from localStorage
+  window.onload = () => {
+    const chat = document.getElementById("chat-messages");
+    const savedMessages = localStorage.getItem("chatHistory");
+    if (savedMessages) {
+      chat.innerHTML = savedMessages;
+      chat.scrollTop = chat.scrollHeight;
+    }
+  };
+
+  async function sendMessage() {
+    const input = document.getElementById("userMessage");
+    const message = input.value.trim();
+    if (!message) return;
+
+    input.value = "";
+
+    const chat = document.getElementById("chat-messages");
+    chat.innerHTML += `<p><b>You:</b> ${message}</p>`;
+
+    saveChatHistory();
+
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    const data = await response.json();
+
+    chat.innerHTML += `<p><b>Bot:</b> ${data.reply}</p>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    saveChatHistory();
+  }
+
+  // Save chat to localStorage
+  function saveChatHistory() {
+    const chat = document.getElementById("chat-messages");
+    localStorage.setItem("chatHistory", chat.innerHTML);
+  }
+
+  // Toggle minimize/maximize
+  function toggleChat() {
+    const widget = document.getElementById("chatbot-widget");
+    const icon = document.getElementById("toggle-icon");
+    widget.classList.toggle("collapsed");
+    icon.textContent = widget.classList.contains("collapsed") ? "+" : "−";
+  }
+</script>
